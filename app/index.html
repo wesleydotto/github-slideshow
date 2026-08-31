@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trilhas Ativas — Metodologias Ativas para Biologia e Ciências</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topo">
+    <h1>🌱 Trilhas Ativas</h1>
+    <p>
+      Banco de metodologias ativas para o ensino de Biologia e Ciências, com
+      gerador de trilhas de aprendizagem e referências para embasar sua aula.
+    </p>
+  </header>
+
+  <main>
+    <section id="painel-trilha">
+      <h2>Gerador de trilha de aprendizagem</h2>
+      <p class="section-desc">
+        Escolha um tema e um nível de ensino para gerar uma sequência didática
+        que passa por sensibilização, exploração, sistematização, aplicação e
+        avaliação.
+      </p>
+      <div class="trilha-form">
+        <div class="campo">
+          <label for="trilha-materia">Tema / matéria</label>
+          <select id="trilha-materia">
+            <option value="todas">Todas as matérias</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="trilha-nivel">Nível de ensino</label>
+          <select id="trilha-nivel">
+            <option value="todos">Todos os níveis</option>
+          </select>
+        </div>
+        <button type="button" id="trilha-gerar" class="btn-primario">Gerar trilha</button>
+      </div>
+      <div id="trilha-resultado" class="trilha-resultado"></div>
+      <button type="button" id="trilha-imprimir" class="btn-secundario" hidden>🖨️ Exportar / imprimir trilha</button>
+    </section>
+
+    <section id="painel-biblioteca">
+      <h2>Biblioteca de metodologias</h2>
+      <p class="section-desc">Explore, filtre e busque metodologias ativas por matéria, nível e etapa da aula.</p>
+
+      <div class="filtros">
+        <div class="campo">
+          <label for="campo-busca">Buscar</label>
+          <input type="search" id="campo-busca" placeholder="Ex.: investigação, genética, debate..." />
+        </div>
+        <div class="campo">
+          <label for="filtro-materia">Matéria</label>
+          <select id="filtro-materia">
+            <option value="todas">Todas</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="filtro-nivel">Nível</label>
+          <select id="filtro-nivel">
+            <option value="todos">Todos</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="filtro-etapa">Etapa da aula</label>
+          <select id="filtro-etapa">
+            <option value="todas">Todas</option>
+          </select>
+        </div>
+      </div>
+
+      <p id="contagem-resultados" class="contagem"></p>
+      <div id="grid-metodologias" class="grid"></div>
+    </section>
+  </main>
+
+  <footer>Trilhas Ativas · Banco de metodologias ativas para Biologia e Ciências</footer>
+
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-caixa">
+      <button type="button" id="modal-fechar" class="modal-fechar" aria-label="Fechar">✕</button>
+      <div id="modal-conteudo" class="modal-conteudo"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
