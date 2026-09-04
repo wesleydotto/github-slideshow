@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NEON WAVE LAB — Ondas, BPM e Decibéis</title>
+<style>
+:root{
+  --bg:#061018;
+  --bg2:#081923;
+  --panel:#0b1e29;
+  --panel2:#102a37;
+  --line:#1b6076;
+  --line2:#173847;
+  --cyan:#42e7ff;
+  --cyan2:#15a8c6;
+  --green:#66ffb0;
+  --amber:#ffd166;
+  --red:#ff6577;
+  --violet:#ba9cff;
+  --text:#eafcff;
+  --muted:#8fb6c2;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+  color:var(--text);
+  background:
+    linear-gradient(rgba(6,16,24,.94),rgba(6,16,24,.97)),
+    repeating-linear-gradient(0deg,transparent 0 29px,rgba(66,231,255,.055) 30px),
+    repeating-linear-gradient(90deg,transparent 0 29px,rgba(66,231,255,.055) 30px);
+}
+body:before{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 20% 10%,rgba(66,231,255,.08),transparent 35%),
+             radial-gradient(circle at 85% 25%,rgba(186,156,255,.06),transparent 30%);
+}
+header{
+  position:sticky;top:0;z-index:20;
+  background:rgba(5,16,24,.93);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.head{
+  max-width:1320px;margin:auto;padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.brand h1{
+  margin:0;font-size:clamp(22px,3vw,34px);letter-spacing:.08em;
+}
+.brand h1 span{color:var(--cyan)}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+button,.fileBtn,select,input{
+  font:inherit;
+}
+button,.fileBtn{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,#0d2b38,#09212c);
+  color:var(--text);
+  padding:10px 14px;
+  cursor:pointer;
+  text-transform:uppercase;
+  font-weight:800;
+  letter-spacing:.045em;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+}
+button:hover,.fileBtn:hover{border-color:var(--cyan);box-shadow:0 0 18px rgba(66,231,255,.12)}
+button:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+button.active{background:#0f4253;border-color:var(--cyan);color:#fff}
+button.green{border-color:#1e8a60;background:#0c3b2b}
+button.amber{border-color:#8d6b1f;background:#3b3010}
+button.red{border-color:#8a2b39;background:#39131b}
+button.violet{border-color:#6b4fae;background:#241a3d}
+.fileBtn{display:inline-block;text-align:center}
+input[type=file]{display:none}
+select,input[type=number],input[type=text]{
+  width:100%;
+  color:#06202b;
+  background:#eaffff;
+  border:0;
+  padding:10px 12px;
+  border-radius:0;
+}
+main{max-width:1320px;margin:auto;padding:20px}
+.module{display:none}
+.module.active{display:block}
+.hero{
+  display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;
+  margin:4px 0 16px;
+}
+.hero h2{margin:0;font-size:clamp(24px,4vw,38px);letter-spacing:.04em}
+.hero p{margin:5px 0 0;color:var(--muted)}
+.badge{
+  border:1px solid var(--line);padding:8px 12px;color:var(--cyan);
+  background:rgba(13,43,56,.65);font-family:Consolas,monospace
+}
+.toolbar,.grid2,.grid3,.stats,.measureGrid{
+  display:grid;gap:12px
+}
+.toolbar{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:12px}
+.grid2{grid-template-columns:1.25fr .75fr}
+.grid3{grid-template-columns:repeat(3,1fr)}
+.stats{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin:12px 0}
+.measureGrid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.panel{
+  border:1px solid var(--line2);
+  background:linear-gradient(180deg,rgba(11,30,41,.96),rgba(7,22,31,.98));
+  padding:14px;
+  position:relative;
+}
+.panel:before{
+  content:"";position:absolute;left:-1px;top:-1px;width:34px;height:1px;background:var(--cyan);
+}
+.panel h3{margin:0 0 10px;font-size:17px;text-transform:uppercase;letter-spacing:.04em}
+.stat{
+  border:1px solid var(--line2);background:#0a202b;padding:13px;min-height:88px
+}
+.stat .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.stat .value{font-family:Consolas,monospace;font-size:27px;color:var(--cyan);margin-top:6px}
+.small{font-size:13px;color:var(--muted);line-height:1.45}
+.note{
+  border-left:3px solid var(--cyan);
+  background:#0a2633;
+  padding:10px 12px;color:#cdeef5;margin-top:10px;
+}
+.warning{
+  border-left-color:var(--amber);background:#30280d;color:#ffe9a5
+}
+canvas{
+  width:100%;background:#020a0f;border:1px solid #174454;display:block;touch-action:none;
+}
+#waveCanvas{height:360px}
+#spectrumCanvas{height:300px}
+#bpmCanvas{height:330px}
+#dbCanvas{height:250px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row>*{flex:1}
+label{display:block;margin-bottom:6px;color:#bfe3ea;font-size:13px}
+.formula{
+  font-family:Consolas,monospace;
+  border:1px solid #15566b;background:#071c26;padding:12px;margin:10px 0;color:#bff7ff
+}
+.result{min-height:22px;margin-top:7px;font-weight:700}
+.ok{color:var(--green)}.bad{color:var(--red)}.tip{color:var(--amber)}
+.hidden{display:none!important}
+audio,video{width:100%;margin-top:10px}
+.ruler{
+  position:relative;height:430px;border:1px solid var(--line2);background:#07131b;overflow:hidden
+}
+.dbbar{
+  position:absolute;left:26px;bottom:20px;width:72px;height:360px;
+  border:1px solid #1b5062;background:linear-gradient(to top,#12323f,#174d59);
+}
+.dbfill{
+  position:absolute;left:0;right:0;bottom:0;height:0%;
+  background:linear-gradient(to top,#42e7ff,#66ffb0 50%,#ffd166 75%,#ff6577);
+  box-shadow:0 0 22px rgba(66,231,255,.3);
+}
+.dbneedle{
+  position:absolute;left:116px;right:18px;height:1px;background:var(--cyan);
+}
+.refline{
+  position:absolute;left:120px;right:14px;border-top:1px dashed #345a67;
+  font-size:12px;color:#9ac3cd;padding-top:3px
+}
+.refline strong{color:#eaffff}
+.kpi{
+  font-family:Consolas,monospace;font-size:48px;color:var(--cyan);letter-spacing:.02em
+}
+.bpmTap{
+  min-height:110px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;border-color:var(--violet)
+}
+footer{text-align:center;color:#698f99;padding:30px 15px;font-size:12px}
+
+/* ---------- guia de passos ---------- */
+.guidebar{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  border:1px solid var(--line2);background:#0a222d;padding:10px 14px;margin-bottom:12px;
+}
+.guidebar .stepNum{
+  min-width:30px;height:30px;border-radius:50%;background:var(--cyan);color:#04141b;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-family:Consolas,monospace;
+  flex:none;
+}
+.guidebar.done .stepNum{background:var(--green)}
+.guidebar p{margin:0;flex:1 1 260px;color:#cdeef5;font-size:14px}
+.linkbtn{
+  background:none;border:none;color:var(--cyan);text-decoration:underline;cursor:pointer;
+  font:inherit;text-transform:none;font-weight:700;padding:0;letter-spacing:normal;flex:none;
+}
+
+/* ---------- modal de tutorial ---------- */
+.modalOverlay{
+  position:fixed;inset:0;background:rgba(2,8,12,.82);backdrop-filter:blur(3px);
+  display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;
+}
+.modalBox{
+  width:min(640px,100%);max-height:88vh;overflow:auto;
+  border:1px solid var(--cyan2);background:linear-gradient(180deg,#0c2431,#081722);
+  padding:22px 22px 18px;position:relative;
+}
+.modalBox h4{margin:2px 0 4px;font-size:20px;letter-spacing:.03em;color:var(--cyan)}
+.stepTag{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.modalClose{
+  position:absolute;top:12px;right:12px;background:none;border:1px solid var(--line2);
+  color:var(--text);width:30px;height:30px;padding:0;cursor:pointer;clip-path:none;
+}
+.modalBody{color:#d8f4f8;font-size:14.5px;line-height:1.6}
+.modalBody strong{color:#fff}
+.modalBody .ex{
+  margin-top:10px;border-left:3px solid var(--green);background:#0a2a20;padding:8px 12px;color:#c8ffe4;font-family:Consolas,monospace;font-size:13px;
+}
+.modalNav{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px}
+.dots{display:flex;gap:6px}
+.dots span{width:8px;height:8px;border-radius:50%;background:#1b4a58}
+.dots span.active{background:var(--cyan)}
+.waveSvg{width:100%;height:auto;margin:10px 0;background:#050f16;border:1px solid #17414f}
+
+/* ---------- calculadora ---------- */
+.unitRow{display:flex;gap:8px}
+.unitRow input{flex:2}
+.unitRow select{flex:1}
+.arrowBig{text-align:center;color:var(--muted);font-size:22px;margin:4px 0}
+
+@media(max-width:900px){
+  .grid2,.grid3{grid-template-columns:1fr}
+  #waveCanvas{height:300px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div class="brand">
+      <h1>NEON <span>WAVE LAB</span></h1>
+      <p>Laboratório digital de ondas, ritmo e intensidade sonora — com tutorial guiado e calculadora rápida.</p>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-target="waves">01 Ondas</button>
+      <button class="tab" data-target="bpm">02 BPM</button>
+      <button class="tab" data-target="db">03 Decibéis</button>
+      <button class="tab" data-target="calc">04 Calculadora</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- ================= ONDAS ================= -->
+<section id="waves" class="module active">
+  <div class="hero">
+    <div>
+      <h2>Laboratório de Ondas</h2>
+      <p>Congele um trecho, meça Δt, conte ciclos e calcule frequência, período e comprimento de onda.</p>
+    </div>
+    <div class="badge">MODO: ANÁLISE TEMPORAL</div>
+  </div>
+
+  <div class="toolbar">
+    <button id="waveMicBtn">Microfone</button>
+    <label class="fileBtn" for="waveFile">Carregar áudio/vídeo</label>
+    <input id="waveFile" type="file" accept="audio/*,video/*">
+    <button id="wavePauseBtn">Pausar / Congelar</button>
+    <button id="waveClearBtn" class="amber">Limpar marcadores</button>
+    <button id="waveTutorialBtn" class="violet">❓ Como medir (tutorial)</button>
+  </div>
+
+  <div class="guidebar" id="waveGuide">
+    <div class="stepNum" id="waveGuideNum">1</div>
+    <p id="waveGuideText">Passo 1 de 4 — Ative o microfone, carregue um áudio/vídeo ou toque um tom no gerador abaixo.</p>
+    <button class="linkbtn" id="waveGuideTutBtn">ver tutorial completo</button>
+  </div>
+
+  <div class="panel">
+    <div class="grid3">
+      <div>
+        <label>Velocidade do som (m/s)</label>
+        <input id="soundSpeed" type="number" value="343" step="0.1">
+      </div>
+      <div>
+        <label>Precisão</label>
+        <select id="fftSize">
+          <option value="2048">Normal</option>
+          <option value="4096" selected>Boa</option>
+          <option value="8192">Alta</option>
+        </select>
+      </div>
+      <div>
+        <label>Zoom horizontal</label>
+        <select id="waveZoom">
+          <option value="1">1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+          <option value="8">8×</option>
+        </select>
+      </div>
+    </div>
+    <div id="waveMediaWrap"></div>
+  </div>
+
+  <div class="grid2" style="margin-top:12px">
+    <div class="panel">
+      <h3>Forma de onda — amplitude × tempo</h3>
+      <canvas id="waveCanvas" width="1000" height="380"></canvas>
+      <div class="small">Clique no gráfico para posicionar A e B. A escala horizontal está em milissegundos.</div>
+    </div>
+    <div class="panel">
+      <h3>Espectro de frequências</h3>
+      <canvas id="spectrumCanvas" width="740" height="320"></canvas>
+      <div class="small">Em música real existem muitas frequências simultâneas; a barra destacada representa a dominante estimada.</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="label">Janela temporal</div><div class="value"><span id="windowMs">—</span> ms</div></div>
+    <div class="stat"><div class="label">Marcador A</div><div class="value"><span id="markerA">—</span> ms</div></div>
+    <div class="stat"><div class="label">Marcador B</div><div class="value"><span id="markerB">—</span> ms</div></div>
+    <div class="stat"><div class="label">Δt</div><div class="value"><span id="deltaMs">—</span> ms</div></div>
+    <div class="stat"><div class="label">Freq. dominante</div><div class="value"><span id="dominantFreq">—</span> Hz</div></div>
+  </div>
+
+  <div class="panel">
+    <h3>Cálculo manual</h3>
+    <div class="measureGrid">
+      <div>
+        <label>Número de ciclos contados</label>
+        <input id="cycleCount" type="number" min="1" value="1" step="1">
+      </div>
+      <div>
+        <label>Frequência calculada</label>
+        <input id="manualFreq" type="text" readonly value="—">
+      </div>
+      <div>
+        <label>Período calculado</label>
+        <input id="manualPeriod" type="text" readonly value="—">
+      </div>
+      <div>
+        <label>Comprimento de onda</label>
+        <input id="manualLambda" type="text" readonly value="—">
+      </div>
+    </div>
+    <div class="formula">
+      f = ciclos / Δt(s) &nbsp; | &nbsp; T = Δt(s) / ciclos = 1/f &nbsp; | &nbsp; λ = v/f
+    </div>
+    <button id="calcWaveBtn" class="green">Calcular</button>
+    <div id="waveResult" class="result"></div>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+    <h3>Gerador de tons</h3>
+    <div class="row">
+      <select id="toneFreq">
+        <option value="100">100 Hz</option>
+        <option value="200">200 Hz</option>
+        <option value="440" selected>440 Hz</option>
+        <option value="500">500 Hz</option>
+        <option value="800">800 Hz</option>
+        <option value="1000">1000 Hz</option>
+      </select>
+      <button id="toneStart">Tocar tom</button>
+      <button id="toneStop" class="red">Parar</button>
+    </div>
+    <div class="small" style="margin-top:8px">Dica para praticar: escolha um tom conhecido (ex: 440 Hz), congele a onda e veja se o cálculo manual bate com o valor esperado.</div>
+  </div>
+</section>
+
+<!-- ================= BPM ================= -->
+<section id="bpm" class="module">
+  <div class="hero">
+    <div>
+      <h2>Laboratório BPM</h2>
+      <p>Analise o pulso rítmico da música sem confundir batidas com ciclos da onda sonora.</p>
+    </div>
+    <div class="badge">MODO: RITMO / TEMPO MUSICAL</div>
+  </div>
+
+  <div class="toolbar">
+    <label class="fileBtn" for="bpmFile">Carregar música/vídeo</label>
+    <input id="bpmFile" type="file" accept="audio/*,video/*">
+    <button id="analyzeBpmBtn" class="green">Analisar BPM</button>
+    <button id="resetTapBtn" class="amber">Zerar TAP</button>
+    <button id="bpmTutorialBtn" class="violet">❓ Como funciona</button>
+  </div>
+
+  <div class="guidebar" id="bpmGuide">
+    <div class="stepNum" id="bpmGuideNum">1</div>
+    <p id="bpmGuideText">Passo 1 de 3 — Carregue uma música (áudio ou vídeo).</p>
+    <button class="linkbtn" id="bpmGuideTutBtn">ver tutorial completo</button>
+  </div>
+
+  <div class="panel">
+    <div id="bpmMediaWrap"></div>
+    <div class="note">O BPM mede <strong>batidas por minuto</strong>. Uma batida musical não é uma oscilação individual da onda sonora.</div>
+  </div>
+
+  <div class="grid2" style="margin-top:12px">
+    <div class="panel">
+      <h3>Envelope rítmico</h3>
+      <canvas id="bpmCanvas" width="1000" height="360"></canvas>
+      <div class="small">Os picos destacados representam eventos de energia que o algoritmo considera candidatos a batidas.</div>
+    </div>
+    <div class="panel">
+      <h3>Leitura</h3>
+      <div class="kpi"><span id="bpmValue">—</span> BPM</div>
+      <div class="stats">
+        <div class="stat"><div class="label">Intervalo médio</div><div class="value"><span id="beatInterval">—</span> ms</div></div>
+        <div class="stat"><div class="label">Confiança</div><div class="value"><span id="bpmConfidence">—</span></div></div>
+      </div>
+      <div class="formula">BPM = batidas / tempo(s) × 60</div>
+      <div class="small">A detecção automática é uma estimativa. Algumas músicas podem ser interpretadas em metade ou no dobro do BPM real.</div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+    <h3>Contagem manual</h3>
+    <div class="measureGrid">
+      <div>
+        <label>Batidas contadas</label>
+        <input id="beatsManual" type="number" min="1" value="30">
+      </div>
+      <div>
+        <label>Tempo observado (s)</label>
+        <input id="secondsManual" type="number" min="0.1" value="15" step="0.1">
+      </div>
+      <div>
+        <label>BPM calculado</label>
+        <input id="manualBpmOut" type="text" readonly value="—">
+      </div>
+    </div>
+    <button id="manualBpmBtn" class="green">Calcular BPM</button>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+    <h3>TAP BPM</h3>
+    <button id="tapBtn" class="bpmTap">TOQUE AQUI NO RITMO</button>
+    <div class="small">Toque várias vezes acompanhando a batida. O laboratório calcula o intervalo médio entre seus toques.</div>
+    <div class="kpi" style="font-size:32px;margin-top:10px"><span id="tapBpm">—</span> BPM</div>
+  </div>
+</section>
+
+<!-- ================= DB ================= -->
+<section id="db" class="module">
+  <div class="hero">
+    <div>
+      <h2>Laboratório de Decibéis</h2>
+      <p>Compare intensidade sonora, observe variações e explore uma escala didática de referência.</p>
+    </div>
+    <div class="badge">MODO: INTENSIDADE SONORA</div>
+  </div>
+
+  <div class="toolbar">
+    <button id="dbMicBtn">Ativar microfone</button>
+    <button id="dbStopBtn" class="red">Parar medição</button>
+    <button id="dbZeroBtn" class="amber">Zerar pico</button>
+    <button id="dbTutorialBtn" class="violet">❓ Entenda a escala</button>
+  </div>
+
+  <div class="guidebar" id="dbGuide">
+    <div class="stepNum" id="dbGuideNum">1</div>
+    <p id="dbGuideText">Passo 1 de 2 — Clique em Ativar microfone para começar a medir.</p>
+    <button class="linkbtn" id="dbGuideTutBtn">ver tutorial completo</button>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>Medidor em tempo real</h3>
+      <canvas id="dbCanvas" width="1000" height="280"></canvas>
+      <div class="stats">
+        <div class="stat"><div class="label">Leitura relativa</div><div class="value"><span id="dbfsValue">—</span> dBFS</div></div>
+        <div class="stat"><div class="label">Estimativa calibrada</div><div class="value"><span id="dbsplValue">—</span> dB SPL</div></div>
+        <div class="stat"><div class="label">Pico estimado</div><div class="value"><span id="dbPeak">—</span> dB SPL</div></div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Ajuste de calibração (dB)</label>
+          <input id="calibrationOffset" type="number" value="94" step="1">
+        </div>
+        <div>
+          <label>Suavização</label>
+          <select id="dbSmoothing">
+            <option value="0.75">Rápida</option>
+            <option value="0.88" selected>Normal</option>
+            <option value="0.95">Suave</option>
+          </select>
+        </div>
+      </div>
+      <div class="note warning">
+        O microfone do navegador não é um decibelímetro calibrado. A leitura nativa é em <strong>dBFS</strong> (nível digital relativo). O valor em dB SPL abaixo é apenas uma <strong>estimativa didática</strong> baseada no ajuste de calibração.
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Escala de referência — dB SPL</h3>
+      <div class="ruler">
+        <div class="dbbar"><div id="dbFill" class="dbfill"></div></div>
+        <div id="dbNeedle" class="dbneedle" style="bottom:20px"></div>
+
+        <div class="refline" style="bottom:20px"><strong>0 dB</strong> — limiar de audição de referência</div>
+        <div class="refline" style="bottom:56px"><strong>10 dB</strong> — respiração / ambiente muito silencioso</div>
+        <div class="refline" style="bottom:92px"><strong>20 dB</strong> — sussurro distante / folhas suaves</div>
+        <div class="refline" style="bottom:128px"><strong>30 dB</strong> — quarto silencioso</div>
+        <div class="refline" style="bottom:164px"><strong>40 dB</strong> — biblioteca tranquila</div>
+        <div class="refline" style="bottom:200px"><strong>50 dB</strong> — conversa baixa</div>
+        <div class="refline" style="bottom:236px"><strong>60 dB</strong> — conversa normal</div>
+        <div class="refline" style="bottom:272px"><strong>70 dB</strong> — trânsito moderado</div>
+        <div class="refline" style="bottom:308px"><strong>80 dB</strong> — rua movimentada</div>
+        <div class="refline" style="bottom:344px"><strong>90 dB</strong> — som muito alto</div>
+        <div class="refline" style="bottom:380px"><strong>100+ dB</strong> — níveis muito intensos</div>
+      </div>
+      <div class="small" style="margin-top:8px">Exemplos são aproximados e variam com distância, ambiente e fonte sonora.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CALCULADORA ================= -->
+<section id="calc" class="module">
+  <div class="hero">
+    <div>
+      <h2>Calculadora Rápida</h2>
+      <p>Converta entre frequência, período, comprimento de onda, BPM e decibéis sem precisar de áudio.</p>
+    </div>
+    <div class="badge">MODO: CONVERSÃO DIRETA</div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>Onda: frequência ↔ período ↔ comprimento de onda</h3>
+      <div class="formula">λ = v / f &nbsp;|&nbsp; f = 1 / T &nbsp;|&nbsp; T = 1 / f</div>
+      <label>Velocidade de propagação (m/s)</label>
+      <div class="unitRow">
+        <input id="calcSpeed" type="number" value="343" step="0.1">
+        <select id="calcSpeedPreset">
+          <option value="343">Som no ar (343)</option>
+          <option value="1480">Som na água (1480)</option>
+          <option value="299792458">Luz no vácuo (299792458)</option>
+          <option value="custom">Personalizado</option>
+        </select>
+      </div>
+      <div class="small" style="margin:10px 0">Preencha a frequência OU o comprimento de onda — o outro campo e o período são calculados automaticamente.</div>
+      <label>Frequência</label>
+      <div class="unitRow">
+        <input id="calcFreq" type="number" step="any" placeholder="ex: 440">
+        <select id="calcFreqUnit">
+          <option value="1">Hz</option>
+          <option value="1000">kHz</option>
+          <option value="1000000">MHz</option>
+        </select>
+      </div>
+      <label style="margin-top:10px">Comprimento de onda</label>
+      <div class="unitRow">
+        <input id="calcLambda" type="number" step="any" placeholder="ex: 0.78">
+        <select id="calcLambdaUnit">
+          <option value="1">m</option>
+          <option value="0.01">cm</option>
+          <option value="0.001">mm</option>
+        </select>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="label">Período (T)</div><div class="value"><span id="calcPeriodOut">—</span></div></div>
+      </div>
+      <button id="calcWaveClear" class="amber">Limpar</button>
+    </div>
+
+    <div class="panel">
+      <h3>Tempo musical: BPM ↔ intervalo entre batidas</h3>
+      <div class="formula">BPM = 60 / T(s) &nbsp;|&nbsp; T(s) = 60 / BPM</div>
+      <label>BPM</label>
+      <input id="calcBpmIn" type="number" step="any" placeholder="ex: 120">
+      <div class="arrowBig">⇅</div>
+      <label>Intervalo entre batidas (ms)</label>
+      <input id="calcMsIn" type="number" step="any" placeholder="ex: 500">
+      <div class="stats">
+        <div class="stat"><div class="label">Equivalente em Hz</div><div class="value"><span id="calcBpmHzOut">—</span> Hz</div></div>
+      </div>
+      <button id="calcBpmClear" class="amber">Limpar</button>
+
+      <h3 style="margin-top:20px">Decibéis: diferença entre dois níveis</h3>
+      <div class="formula">ΔdB = 10·log₁₀(P₂/P₁) [potência] &nbsp;|&nbsp; ΔdB = 20·log₁₀(A₂/A₁) [pressão]</div>
+      <label>Grandeza</label>
+      <select id="calcDbType">
+        <option value="10">Potência / intensidade</option>
+        <option value="20" selected>Pressão sonora / amplitude</option>
+      </select>
+      <div class="row" style="margin-top:10px">
+        <div><label>Valor de referência</label><input id="calcDbRef" type="number" step="any" value="1"></div>
+        <div><label>Valor medido</label><input id="calcDbMeas" type="number" step="any" value="2"></div>
+      </div>
+      <button id="calcDbBtn" class="green">Calcular diferença</button>
+      <div id="calcDbResult" class="result"></div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:14px">Esta calculadora é independente das medições ao vivo — use-a para conferir contas de exercícios ou entender rapidamente como as grandezas se relacionam.</div>
+</section>
+</main>
+
+<footer>NEON WAVE LAB — ferramenta educacional experimental para navegador</footer>
+
+<!-- ================= MODAL DE TUTORIAL ================= -->
+<div id="tutorialOverlay" class="modalOverlay hidden">
+  <div class="modalBox">
+    <button class="modalClose" id="tutorialClose">✕</button>
+    <div class="stepTag">Tutorial <span id="tutStepNow">1</span>/<span id="tutStepTotal">6</span></div>
+    <h4 id="tutTitle">—</h4>
+    <div class="modalBody" id="tutBody"></div>
+    <div class="modalNav">
+      <button id="tutPrev">◀ Anterior</button>
+      <div class="dots" id="tutDots"></div>
+      <button id="tutNext" class="green">Próximo ▶</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- navegação ---------- */
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".module").forEach(m=>m.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.target).classList.add("active");
+  });
+});
+
+/* ---------- infraestrutura de áudio para ondas ---------- */
+let waveCtx=null, waveAnalyser=null, waveSource=null, waveMicStream=null, waveOsc=null;
+let waveAnim=null, waveFrozen=false, waveTimeData=null, waveFreqData=null;
+let markerAPos=null, markerBPos=null, markerNext="A", waveWindowSec=0, dominant=0;
+let waveAudio=null;
+const waveCanvas=document.getElementById("waveCanvas");
+const wc=waveCanvas.getContext("2d");
+const spectrumCanvas=document.getElementById("spectrumCanvas");
+const sc=spectrumCanvas.getContext("2d");
+const waveMediaWrap=document.getElementById("waveMediaWrap");
+
+function ensureWaveCtx(){
+  if(!waveCtx){
+    waveCtx=new (window.AudioContext||window.webkitAudioContext)();
+    waveAnalyser=waveCtx.createAnalyser();
+    waveAnalyser.fftSize=+document.getElementById("fftSize").value;
+    waveAnalyser.smoothingTimeConstant=.75;
+  }
+  if(waveCtx.state==="suspended") waveCtx.resume();
+}
+function stopWaveMic(){
+  if(waveMicStream){waveMicStream.getTracks().forEach(t=>t.stop());waveMicStream=null}
+}
+function setupWaveMedia(file){
+  waveMediaWrap.innerHTML="";
+  const isVideo=file.type.startsWith("video/");
+  waveAudio=document.createElement(isVideo?"video":"audio");
+  waveAudio.id="waveAudio";
+  waveAudio.controls=true;
+  if(isVideo){waveAudio.style.maxHeight="260px";waveAudio.style.background="#000"}
+  waveMediaWrap.appendChild(waveAudio);
+  waveAudio.src=URL.createObjectURL(file);
+  return waveAudio;
+}
+document.getElementById("waveMicBtn").onclick=async()=>{
+  ensureWaveCtx(); stopWaveMic();
+  try{
+    waveMicStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    if(waveSource) try{waveSource.disconnect()}catch(e){}
+    waveSource=waveCtx.createMediaStreamSource(waveMicStream);
+    waveSource.connect(waveAnalyser);
+    waveFrozen=false; drawWaveLoop(); updateWaveGuide();
+  }catch(e){alert("Não foi possível acessar o microfone.");}
+};
+document.getElementById("waveFile").onchange=async(e)=>{
+  const f=e.target.files[0];if(!f)return;
+  ensureWaveCtx(); stopWaveMic();
+  setupWaveMedia(f);
+  waveAudio._srcNode=waveCtx.createMediaElementSource(waveAudio);
+  waveAudio._srcNode.connect(waveAnalyser);waveAnalyser.connect(waveCtx.destination);
+  await waveAudio.play();waveFrozen=false;drawWaveLoop();updateWaveGuide();
+};
+document.getElementById("fftSize").onchange=()=>{if(waveAnalyser)waveAnalyser.fftSize=+document.getElementById("fftSize").value};
+document.getElementById("waveZoom").onchange=()=>drawWaveFrame();
+
+document.getElementById("wavePauseBtn").onclick=async()=>{
+  if(!waveAnalyser)return;
+  waveFrozen=!waveFrozen;
+  if(waveFrozen){
+    cancelAnimationFrame(waveAnim);
+    if(waveAudio&&!waveAudio.paused)waveAudio.pause();
+    if(waveOsc&&waveCtx.state==="running")await waveCtx.suspend();
+    drawWaveFrame();
+  }else{
+    if(waveCtx.state==="suspended")await waveCtx.resume();
+    if(waveAudio&&waveAudio.src&&waveAudio.paused)try{await waveAudio.play()}catch(e){}
+    drawWaveLoop();
+  }
+  updateWaveGuide();
+};
+
+function drawWaveLoop(){
+  if(!waveAnalyser||waveFrozen)return;
+  waveAnalyser.fftSize=+document.getElementById("fftSize").value;
+  waveTimeData=new Uint8Array(waveAnalyser.fftSize);
+  waveAnalyser.getByteTimeDomainData(waveTimeData);
+  waveFreqData=new Uint8Array(waveAnalyser.frequencyBinCount);
+  waveAnalyser.getByteFrequencyData(waveFreqData);
+
+  let max=0,idx=0;
+  for(let i=1;i<waveFreqData.length;i++)if(waveFreqData[i]>max){max=waveFreqData[i];idx=i}
+  dominant=max>18?idx*(waveCtx.sampleRate/2)/waveFreqData.length:0;
+
+  drawWaveFrame();
+  waveAnim=requestAnimationFrame(drawWaveLoop);
+}
+function drawWaveFrame(){
+  wc.fillStyle="#020a0f";wc.fillRect(0,0,waveCanvas.width,waveCanvas.height);
+  sc.fillStyle="#020a0f";sc.fillRect(0,0,spectrumCanvas.width,spectrumCanvas.height);
+
+  if(!waveCtx||!waveAnalyser||!waveTimeData){
+    wc.fillStyle="#789aa4";wc.font="22px Segoe UI";wc.textAlign="center";
+    wc.fillText("Ative uma fonte sonora para iniciar.",waveCanvas.width/2,waveCanvas.height/2);
+    sc.fillStyle="#789aa4";sc.font="20px Segoe UI";sc.textAlign="center";
+    sc.fillText("Espectro aguardando sinal.",spectrumCanvas.width/2,spectrumCanvas.height/2);
+    return;
+  }
+  const zoom=+document.getElementById("waveZoom").value;
+  const shown=Math.max(32,Math.floor(waveTimeData.length/zoom));
+  waveWindowSec=shown/waveCtx.sampleRate;
+  const div=10;
+  wc.font="12px Consolas";wc.textAlign="center";
+  for(let i=0;i<=div;i++){
+    const x=i*waveCanvas.width/div;
+    wc.strokeStyle="#0d2a34";wc.beginPath();wc.moveTo(x,0);wc.lineTo(x,waveCanvas.height);wc.stroke();
+    wc.fillStyle="#6b9ba8";
+    wc.fillText((waveWindowSec*1000*i/div).toFixed(2)+" ms",x,17);
+  }
+  wc.strokeStyle="#42e7ff";wc.lineWidth=2;wc.beginPath();
+  for(let i=0;i<shown;i++){
+    const x=i*waveCanvas.width/(shown-1);
+    const y=(waveTimeData[i]/128)*waveCanvas.height/2;
+    if(i===0)wc.moveTo(x,y);else wc.lineTo(x,y);
+  }
+  wc.stroke();
+  drawMarker(markerAPos,"#ffd166","A");
+  drawMarker(markerBPos,"#ba9cff","B");
+
+  const bins=Math.min(300,waveFreqData.length), bw=spectrumCanvas.width/bins;
+  let maxv=0,maxi=0;
+  for(let i=1;i<bins;i++)if(waveFreqData[i]>maxv){maxv=waveFreqData[i];maxi=i}
+  for(let i=0;i<bins;i++){
+    const h=(waveFreqData[i]/255)*spectrumCanvas.height;
+    sc.fillStyle=i===maxi?"#ffd166":"#66ffb0";
+    sc.fillRect(i*bw,spectrumCanvas.height-h,Math.max(1,bw-1),h);
+  }
+  document.getElementById("windowMs").textContent=(waveWindowSec*1000).toFixed(2);
+  document.getElementById("dominantFreq").textContent=dominant?dominant.toFixed(1):"—";
+  updateMarkers();
+}
+function drawMarker(pos,color,label){
+  if(pos===null)return;
+  const x=pos*waveCanvas.width;
+  wc.strokeStyle=color;wc.lineWidth=3;wc.beginPath();wc.moveTo(x,0);wc.lineTo(x,waveCanvas.height);wc.stroke();
+  wc.fillStyle=color;wc.font="bold 17px Consolas";wc.textAlign="left";wc.fillText(label,x+5,38);
+}
+function eventPos(e){
+  const r=waveCanvas.getBoundingClientRect();
+  const cx=e.touches?e.touches[0].clientX:e.clientX;
+  return Math.max(0,Math.min(1,(cx-r.left)/r.width));
+}
+waveCanvas.addEventListener("click",e=>{
+  const p=eventPos(e);
+  if(markerNext==="A"){markerAPos=p;markerNext="B"}else{markerBPos=p;markerNext="A"}
+  drawWaveFrame();updateWaveGuide();
+});
+waveCanvas.addEventListener("touchstart",e=>{
+  e.preventDefault();const p=eventPos(e);
+  if(markerNext==="A"){markerAPos=p;markerNext="B"}else{markerBPos=p;markerNext="A"}
+  drawWaveFrame();updateWaveGuide();
+},{passive:false});
+function updateMarkers(){
+  const a=markerAPos===null?null:markerAPos*waveWindowSec*1000;
+  const b=markerBPos===null?null:markerBPos*waveWindowSec*1000;
+  document.getElementById("markerA").textContent=a===null?"—":a.toFixed(3);
+  document.getElementById("markerB").textContent=b===null?"—":b.toFixed(3);
+  document.getElementById("deltaMs").textContent=(a===null||b===null)?"—":Math.abs(b-a).toFixed(3);
+}
+document.getElementById("waveClearBtn").onclick=()=>{
+  markerAPos=markerBPos=null;markerNext="A";
+  ["manualFreq","manualPeriod","manualLambda"].forEach(id=>document.getElementById(id).value="—");
+  document.getElementById("waveResult").textContent="";document.getElementById("waveResult").className="result";
+  drawWaveFrame();updateWaveGuide();
+};
+document.getElementById("calcWaveBtn").onclick=()=>{
+  const out=document.getElementById("waveResult");
+  if(markerAPos===null||markerBPos===null||!waveWindowSec){
+    out.textContent="Posicione os marcadores A e B.";out.className="result tip";updateWaveGuide();return;
+  }
+  const cycles=+document.getElementById("cycleCount").value;
+  const dt=Math.abs(markerBPos-markerAPos)*waveWindowSec;
+  if(!cycles||dt<=0){out.textContent="Verifique o número de ciclos.";out.className="result bad";updateWaveGuide();return}
+  const f=cycles/dt,T=dt/cycles,v=+document.getElementById("soundSpeed").value||343,lambda=v/f;
+  document.getElementById("manualFreq").value=f.toFixed(2)+" Hz";
+  document.getElementById("manualPeriod").value=T.toFixed(6)+" s";
+  document.getElementById("manualLambda").value=lambda.toFixed(3)+" m";
+  out.textContent="Cálculo concluído.";out.className="result ok";
+  updateWaveGuide();
+};
+document.getElementById("toneStart").onclick=()=>{
+  ensureWaveCtx();
+  if(waveOsc)try{waveOsc.stop()}catch(e){}
+  const g=waveCtx.createGain();g.gain.value=.07;
+  waveOsc=waveCtx.createOscillator();waveOsc.type="sine";waveOsc.frequency.value=+document.getElementById("toneFreq").value;
+  waveOsc.connect(g);g.connect(waveAnalyser);
+  try{waveAnalyser.disconnect()}catch(e){}
+  waveAnalyser.connect(waveCtx.destination);waveOsc.start();waveFrozen=false;drawWaveLoop();updateWaveGuide();
+};
+document.getElementById("toneStop").onclick=()=>{if(waveOsc){try{waveOsc.stop()}catch(e){}waveOsc=null}};
+
+function updateWaveGuide(){
+  const bar=document.getElementById("waveGuide");
+  const num=document.getElementById("waveGuideNum");
+  const txt=document.getElementById("waveGuideText");
+  const hasSource=!!(waveMicStream||(waveAudio&&waveAudio.src)||waveOsc);
+  const resultOk=document.getElementById("waveResult").classList.contains("ok");
+  bar.classList.remove("done");
+  if(resultOk){
+    bar.classList.add("done");num.textContent="✓";
+    txt.textContent="Cálculo concluído! Congele outro trecho ou ajuste os marcadores para medir de novo.";
+  }else if(!hasSource){
+    num.textContent="1";txt.textContent="Passo 1 de 4 — Ative o microfone, carregue um áudio/vídeo ou toque um tom no gerador abaixo.";
+  }else if(!waveFrozen){
+    num.textContent="2";txt.textContent="Passo 2 de 4 — Quando a onda estiver estável na tela, clique em Pausar / Congelar.";
+  }else if(markerAPos===null||markerBPos===null){
+    num.textContent="3";txt.textContent="Passo 3 de 4 — Clique no gráfico para marcar o início (A) e o fim (B) de um número inteiro de ciclos.";
+  }else{
+    num.textContent="4";txt.textContent="Passo 4 de 4 — Digite quantos ciclos existem entre A e B e clique em Calcular.";
+  }
+}
+
+/* ---------- BPM ---------- */
+let bpmArrayBuffer=null, bpmAnalyzed=false, bpmAudio=null;
+const bpmCanvas=document.getElementById("bpmCanvas");
+const bc=bpmCanvas.getContext("2d");
+const bpmMediaWrap=document.getElementById("bpmMediaWrap");
+
+function setupBpmMedia(file){
+  bpmMediaWrap.innerHTML="";
+  const isVideo=file.type.startsWith("video/");
+  bpmAudio=document.createElement(isVideo?"video":"audio");
+  bpmAudio.id="bpmAudio";
+  bpmAudio.controls=true;
+  if(isVideo){bpmAudio.style.maxHeight="260px";bpmAudio.style.background="#000"}
+  bpmMediaWrap.appendChild(bpmAudio);
+  bpmAudio.src=URL.createObjectURL(file);
+  return bpmAudio;
+}
+document.getElementById("bpmFile").onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  setupBpmMedia(f);
+  bpmArrayBuffer=await f.arrayBuffer();
+  bpmAnalyzed=false;updateBpmGuide();
+  drawBpmPlaceholder("Mídia carregada. Clique em ANALISAR BPM.");
+};
+function drawBpmPlaceholder(msg){
+  bc.fillStyle="#020a0f";bc.fillRect(0,0,bpmCanvas.width,bpmCanvas.height);
+  bc.fillStyle="#789aa4";bc.font="21px Segoe UI";bc.textAlign="center";
+  bc.fillText(msg,bpmCanvas.width/2,bpmCanvas.height/2);
+}
+drawBpmPlaceholder("Carregue uma música para analisar.");
+
+document.getElementById("analyzeBpmBtn").onclick=async()=>{
+  if(!bpmArrayBuffer){alert("Carregue uma música primeiro.");return}
+  document.getElementById("bpmValue").textContent="...";
+  const ctx=new (window.AudioContext||window.webkitAudioContext)();
+  let buffer;
+  try{buffer=await ctx.decodeAudioData(bpmArrayBuffer.slice(0));}
+  catch(e){alert("Não foi possível decodificar este arquivo de áudio/vídeo.");return}
+
+  // mono + envelope RMS em janelas de 20 ms
+  const sr=buffer.sampleRate, ch=buffer.numberOfChannels;
+  const len=buffer.length, win=Math.max(128,Math.floor(sr*.02));
+  const env=[];
+  for(let start=0;start<len;start+=win){
+    let sum=0,count=0;
+    const end=Math.min(len,start+win);
+    for(let i=start;i<end;i+=4){
+      let s=0;for(let c=0;c<ch;c++)s+=buffer.getChannelData(c)[i]||0;
+      s/=ch;sum+=s*s;count++;
+    }
+    env.push(Math.sqrt(sum/Math.max(1,count)));
+  }
+  // moving average + novelty
+  const avg=[];
+  const radius=10;
+  for(let i=0;i<env.length;i++){
+    let s=0,n=0;
+    for(let j=Math.max(0,i-radius);j<=Math.min(env.length-1,i+radius);j++){s+=env[j];n++}
+    avg.push(s/n);
+  }
+  const novelty=env.map((v,i)=>Math.max(0,v-avg[i]*1.12));
+  const maxN=Math.max(...novelty,1e-9);
+  const threshold=maxN*.22;
+  const minGap=Math.floor(.25/.02); // <= 240 BPM
+  const peaks=[];
+  let last=-9999;
+  for(let i=1;i<novelty.length-1;i++){
+    if(novelty[i]>threshold&&novelty[i]>=novelty[i-1]&&novelty[i]>=novelty[i+1]&&i-last>=minGap){
+      peaks.push(i);last=i;
+    }
+  }
+  const intervals=[];
+  for(let i=1;i<peaks.length;i++){
+    const sec=(peaks[i]-peaks[i-1])*.02;
+    if(sec>=.25&&sec<=1.5)intervals.push(sec);
+  }
+  let bpm=0,confidence="Baixa";
+  if(intervals.length){
+    const candidates=intervals.map(x=>60/x).map(v=>{
+      while(v<70)v*=2;while(v>180)v/=2;return v;
+    });
+    candidates.sort((a,b)=>a-b);
+    bpm=candidates[Math.floor(candidates.length/2)];
+    const close=candidates.filter(v=>Math.abs(v-bpm)<4).length/candidates.length;
+    confidence=close>.65?"Alta":close>.4?"Média":"Baixa";
+  }
+  document.getElementById("bpmValue").textContent=bpm?Math.round(bpm):"—";
+  document.getElementById("beatInterval").textContent=bpm?(60000/bpm).toFixed(0):"—";
+  document.getElementById("bpmConfidence").textContent=confidence;
+
+  // draw envelope
+  bc.fillStyle="#020a0f";bc.fillRect(0,0,bpmCanvas.width,bpmCanvas.height);
+  const step=Math.max(1,Math.floor(env.length/bpmCanvas.width));
+  const maxE=Math.max(...env,1e-6);
+  bc.strokeStyle="#42e7ff";bc.lineWidth=1.4;bc.beginPath();
+  for(let x=0;x<bpmCanvas.width;x++){
+    const i=Math.min(env.length-1,x*step);
+    const y=bpmCanvas.height-(env[i]/maxE)*(bpmCanvas.height-20);
+    if(x===0)bc.moveTo(x,y);else bc.lineTo(x,y);
+  }
+  bc.stroke();
+  bc.strokeStyle="#ba9cff";bc.lineWidth=1;
+  peaks.forEach(p=>{
+    const x=(p/env.length)*bpmCanvas.width;
+    bc.beginPath();bc.moveTo(x,0);bc.lineTo(x,bpmCanvas.height);bc.stroke();
+  });
+  bpmAnalyzed=true;updateBpmGuide();
+  try{await ctx.close()}catch(e){}
+};
+
+document.getElementById("manualBpmBtn").onclick=()=>{
+  const beats=+document.getElementById("beatsManual").value,sec=+document.getElementById("secondsManual").value;
+  document.getElementById("manualBpmOut").value=(beats>0&&sec>0)?((beats/sec)*60).toFixed(1)+" BPM":"—";
+};
+
+let taps=[];
+document.getElementById("tapBtn").onclick=()=>{
+  const now=performance.now();taps.push(now);
+  if(taps.length>10)taps.shift();
+  if(taps.length>=2){
+    const ints=[];for(let i=1;i<taps.length;i++)ints.push(taps[i]-taps[i-1]);
+    const avg=ints.reduce((a,b)=>a+b,0)/ints.length;
+    document.getElementById("tapBpm").textContent=(60000/avg).toFixed(1);
+  }
+};
+document.getElementById("resetTapBtn").onclick=()=>{taps=[];document.getElementById("tapBpm").textContent="—"};
+
+function updateBpmGuide(){
+  const bar=document.getElementById("bpmGuide");
+  const num=document.getElementById("bpmGuideNum");
+  const txt=document.getElementById("bpmGuideText");
+  bar.classList.remove("done");
+  if(!bpmArrayBuffer){
+    num.textContent="1";txt.textContent="Passo 1 de 3 — Carregue uma música (áudio ou vídeo).";
+  }else if(!bpmAnalyzed){
+    num.textContent="2";txt.textContent="Passo 2 de 3 — Clique em Analisar BPM.";
+  }else{
+    bar.classList.add("done");num.textContent="✓";
+    txt.textContent="Passo 3 de 3 — Compare com a Contagem manual ou o TAP BPM para validar o resultado.";
+  }
+}
+
+/* ---------- dB ---------- */
+let dbCtx=null,dbAnalyser=null,dbStream=null,dbAnim=null,dbPeakVal=-999;
+let dbSmooth=-60;
+const dbCanvas=document.getElementById("dbCanvas"),dc=dbCanvas.getContext("2d");
+
+document.getElementById("dbMicBtn").onclick=async()=>{
+  try{
+    if(!dbCtx)dbCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(dbCtx.state==="suspended")await dbCtx.resume();
+    if(dbStream)dbStream.getTracks().forEach(t=>t.stop());
+    dbStream=await navigator.mediaDevices.getUserMedia({
+      audio:{autoGainControl:false,echoCancellation:false,noiseSuppression:false}
+    });
+    dbAnalyser=dbCtx.createAnalyser();dbAnalyser.fftSize=2048;
+    dbCtx.createMediaStreamSource(dbStream).connect(dbAnalyser);
+    drawDbLoop();updateDbGuide();
+  }catch(e){alert("Não foi possível acessar o microfone.");}
+};
+document.getElementById("dbStopBtn").onclick=()=>{
+  cancelAnimationFrame(dbAnim);
+  if(dbStream){dbStream.getTracks().forEach(t=>t.stop());dbStream=null}
+  updateDbGuide();
+};
+document.getElementById("dbZeroBtn").onclick=()=>{dbPeakVal=-999;document.getElementById("dbPeak").textContent="—"};
+
+function updateDbGuide(){
+  const bar=document.getElementById("dbGuide");
+  const num=document.getElementById("dbGuideNum");
+  const txt=document.getElementById("dbGuideText");
+  if(!dbStream){
+    bar.classList.remove("done");
+    num.textContent="1";txt.textContent="Passo 1 de 2 — Clique em Ativar microfone para começar a medir.";
+  }else{
+    bar.classList.add("done");
+    num.textContent="2";txt.textContent="Passo 2 de 2 — Fale, bata palmas ou toque música e observe a leitura em tempo real.";
+  }
+}
+
+function drawDbLoop(){
+  if(!dbAnalyser)return;
+  const data=new Float32Array(dbAnalyser.fftSize);
+  dbAnalyser.getFloatTimeDomainData(data);
+  let sum=0;
+  for(const x of data)sum+=x*x;
+  const rms=Math.sqrt(sum/data.length);
+  const dbfs=rms>0?20*Math.log10(rms):-100;
+  const alpha=+document.getElementById("dbSmoothing").value;
+  dbSmooth=alpha*dbSmooth+(1-alpha)*dbfs;
+
+  const offset=+document.getElementById("calibrationOffset").value||94;
+  let spl=dbSmooth+offset;
+  spl=Math.max(0,Math.min(120,spl));
+  dbPeakVal=Math.max(dbPeakVal,spl);
+
+  document.getElementById("dbfsValue").textContent=dbSmooth.toFixed(1);
+  document.getElementById("dbsplValue").textContent=spl.toFixed(1);
+  document.getElementById("dbPeak").textContent=dbPeakVal>-900?dbPeakVal.toFixed(1):"—";
+
+  const pct=Math.max(0,Math.min(100,spl/100*100));
+  document.getElementById("dbFill").style.height=pct+"%";
+  document.getElementById("dbNeedle").style.bottom=(20+Math.min(360,spl/100*360))+"px";
+
+  dc.fillStyle="#020a0f";dc.fillRect(0,0,dbCanvas.width,dbCanvas.height);
+  dc.strokeStyle="#173847";
+  for(let i=0;i<=10;i++){
+    const y=i*dbCanvas.height/10;dc.beginPath();dc.moveTo(0,y);dc.lineTo(dbCanvas.width,y);dc.stroke();
+  }
+  if(!drawDbLoop.hist)drawDbLoop.hist=[];
+  drawDbLoop.hist.push(spl);if(drawDbLoop.hist.length>dbCanvas.width)drawDbLoop.hist.shift();
+  dc.strokeStyle="#42e7ff";dc.lineWidth=2;dc.beginPath();
+  drawDbLoop.hist.forEach((v,i)=>{
+    const x=i;const y=dbCanvas.height-(v/120)*dbCanvas.height;
+    if(i===0)dc.moveTo(x,y);else dc.lineTo(x,y);
+  });dc.stroke();
+
+  dbAnim=requestAnimationFrame(drawDbLoop);
+}
+
+/* ---------- calculadora rápida ---------- */
+const calcSpeed=document.getElementById("calcSpeed");
+const calcSpeedPreset=document.getElementById("calcSpeedPreset");
+const calcFreq=document.getElementById("calcFreq"), calcFreqUnit=document.getElementById("calcFreqUnit");
+const calcLambda=document.getElementById("calcLambda"), calcLambdaUnit=document.getElementById("calcLambdaUnit");
+const calcPeriodOut=document.getElementById("calcPeriodOut");
+
+function fmt(n){
+  if(!isFinite(n))return"—";
+  if(n!==0&&(Math.abs(n)>=100000||Math.abs(n)<0.001))return n.toExponential(3);
+  return (Math.round(n*1e6)/1e6).toString();
+}
+function fmtPeriod(T){
+  if(!isFinite(T)||T<=0)return"—";
+  return T<1?(T*1000).toFixed(4)+" ms":T.toFixed(6)+" s";
+}
+function recalcFromFreq(){
+  const v=+calcSpeed.value||343;
+  const fHz=+calcFreq.value*(+calcFreqUnit.value);
+  if(!calcFreq.value||fHz<=0){calcPeriodOut.textContent="—";return}
+  const lambdaM=v/fHz;
+  calcLambda.value=fmt(lambdaM/(+calcLambdaUnit.value));
+  calcPeriodOut.textContent=fmtPeriod(1/fHz);
+}
+function recalcFromLambda(){
+  const v=+calcSpeed.value||343;
+  const lambdaM=+calcLambda.value*(+calcLambdaUnit.value);
+  if(!calcLambda.value||lambdaM<=0){calcPeriodOut.textContent="—";return}
+  const fHz=v/lambdaM;
+  calcFreq.value=fmt(fHz/(+calcFreqUnit.value));
+  calcPeriodOut.textContent=fmtPeriod(1/fHz);
+}
+calcSpeedPreset.onchange=()=>{
+  if(calcSpeedPreset.value!=="custom")calcSpeed.value=calcSpeedPreset.value;
+  if(calcFreq.value)recalcFromFreq();else if(calcLambda.value)recalcFromLambda();
+};
+calcSpeed.oninput=()=>{
+  calcSpeedPreset.value="custom";
+  if(calcFreq.value)recalcFromFreq();else if(calcLambda.value)recalcFromLambda();
+};
+calcFreq.oninput=recalcFromFreq;
+calcFreqUnit.onchange=()=>{if(calcFreq.value)recalcFromFreq();else if(calcLambda.value)recalcFromLambda();};
+calcLambda.oninput=recalcFromLambda;
+calcLambdaUnit.onchange=()=>{if(calcLambda.value)recalcFromLambda();else if(calcFreq.value)recalcFromFreq();};
+document.getElementById("calcWaveClear").onclick=()=>{calcFreq.value="";calcLambda.value="";calcPeriodOut.textContent="—"};
+
+const calcBpmIn=document.getElementById("calcBpmIn"), calcMsIn=document.getElementById("calcMsIn"), calcBpmHzOut=document.getElementById("calcBpmHzOut");
+calcBpmIn.oninput=()=>{
+  const bpm=+calcBpmIn.value;
+  if(!bpm||bpm<=0){calcMsIn.value="";calcBpmHzOut.textContent="—";return}
+  calcMsIn.value=fmt(60000/bpm);calcBpmHzOut.textContent=fmt(bpm/60);
+};
+calcMsIn.oninput=()=>{
+  const ms=+calcMsIn.value;
+  if(!ms||ms<=0){calcBpmIn.value="";calcBpmHzOut.textContent="—";return}
+  const bpm=60000/ms;calcBpmIn.value=fmt(bpm);calcBpmHzOut.textContent=fmt(bpm/60);
+};
+document.getElementById("calcBpmClear").onclick=()=>{calcBpmIn.value="";calcMsIn.value="";calcBpmHzOut.textContent="—"};
+
+document.getElementById("calcDbBtn").onclick=()=>{
+  const factor=+document.getElementById("calcDbType").value;
+  const ref=+document.getElementById("calcDbRef").value, meas=+document.getElementById("calcDbMeas").value;
+  const out=document.getElementById("calcDbResult");
+  if(!(ref>0)||!(meas>0)){out.textContent="Os dois valores devem ser positivos.";out.className="result bad";return}
+  const db=factor*Math.log10(meas/ref);
+  out.textContent="ΔdB = "+db.toFixed(2)+" dB "+(db>=0?"(aumento)":"(redução)");
+  out.className="result ok";
+};
+
+/* ---------- tutorial guiado ---------- */
+const svgDiagram=`<svg class="waveSvg" viewBox="0 0 400 148" xmlns="http://www.w3.org/2000/svg">
+  <line x1="0" y1="60" x2="400" y2="60" stroke="#173847" stroke-width="1"/>
+  <path d="M0,60 C20,15 40,15 60,60 C80,105 100,105 120,60 C140,15 160,15 180,60 C200,105 220,105 240,60 C260,15 280,15 300,60 C320,105 340,105 360,60 C380,15 400,15 400,60" fill="none" stroke="#42e7ff" stroke-width="2.5"/>
+  <line x1="60" y1="14" x2="60" y2="120" stroke="#ffd166" stroke-width="2"/>
+  <text x="60" y="10" fill="#ffd166" font-size="13" font-family="Consolas" text-anchor="middle">A</text>
+  <line x1="180" y1="14" x2="180" y2="120" stroke="#ba9cff" stroke-width="2"/>
+  <text x="180" y="10" fill="#ba9cff" font-size="13" font-family="Consolas" text-anchor="middle">B</text>
+  <line x1="60" y1="128" x2="180" y2="128" stroke="#9ac3cd" stroke-width="1"/>
+  <text x="120" y="140" fill="#9ac3cd" font-size="11" font-family="Segoe UI" text-anchor="middle">Δt entre A e B = 2 ciclos completos</text>
+</svg>`;
+
+const tutorials={
+  waves:{steps:[
+    {t:"Passo 1 — Ative uma fonte sonora",html:`<p>Escolha uma forma de gerar onda na tela: clique em <strong>Microfone</strong>, carregue um <strong>áudio ou vídeo</strong>, ou use o <strong>Gerador de tons</strong> mais abaixo (ótimo para começar, pois a frequência já é conhecida).</p>`},
+    {t:"Passo 2 — Observe a forma de onda",html:`<p>A tela "Forma de onda" desenha a amplitude do som ao longo do tempo, em milissegundos. Espere aparecer um trecho com um padrão repetitivo (picos e vales se repetindo).</p>`},
+    {t:"Passo 3 — Congele o momento certo",html:`<p>Clique em <strong>Pausar / Congelar</strong> quando o padrão estiver bem visível. Isso trava o desenho para você medir com calma — sem pressa, sem precisar acertar de primeira (clique de novo para descongelar e tentar outro trecho).</p>`},
+    {t:"Passo 4 — Marque A e B sobre ciclos completos",html:`<p>Com a onda congelada, clique no gráfico duas vezes: uma no <strong style="color:#ffd166">início</strong> de um ciclo (marcador A) e outra exatamente no <strong style="color:#ba9cff">fim</strong> de um número inteiro de ciclos (marcador B).</p>${svgDiagram}<p class="small" style="color:#9ac3cd">Dica: contar várias oscilações (2, 3, 4...) em vez de apenas uma reduz o erro de medição.</p>`},
+    {t:"Passo 5 — Informe quantos ciclos há entre A e B",html:`<p>No painel <strong>Cálculo manual</strong>, digite em "Número de ciclos contados" quantas oscilações completas cabem entre os marcadores A e B — no desenho acima, esse valor seria <strong>2</strong>.</p>`},
+    {t:"Passo 6 — Calcule",html:`<p>Clique em <strong>Calcular</strong>. O laboratório usa o tempo entre os marcadores (Δt) e o número de ciclos para aplicar:</p><div class="ex">f = ciclos ÷ Δt(s)<br>T = 1 ÷ f<br>λ = velocidade do som ÷ f</div><p class="ex">Exemplo: 2 ciclos em Δt = 4,0 ms (0,004 s) → f = 2/0,004 = <strong>500 Hz</strong>, T = 1/500 = <strong>2 ms</strong>, e com v = 343 m/s → λ = 343/500 ≈ <strong>0,69 m</strong>.</p>`}
+  ]},
+  bpm:{steps:[
+    {t:"Passo 1 — Carregue a música",html:`<p>Use <strong>Carregar música/vídeo</strong> para escolher um arquivo do seu dispositivo.</p>`},
+    {t:"Passo 2 — Analise automaticamente",html:`<p>Clique em <strong>Analisar BPM</strong>. O laboratório mede a energia do som em pequenas janelas de tempo e procura picos regulares — os candidatos a batida.</p>`},
+    {t:"Passo 3 — Confirme com contagem manual ou TAP",html:`<p>Se quiser conferir, conte as batidas ouvindo a música por alguns segundos e use a <strong>Contagem manual</strong> (batidas ÷ tempo × 60), ou toque no ritmo com o <strong>TAP BPM</strong>.</p>`},
+    {t:"Passo 4 — Cuidado com metade/dobro",html:`<p>Alguns estilos musicais têm acentos que confundem o algoritmo, resultando em metade ou o dobro do BPM real. Se o número parecer estranho, compare com o TAP.</p>`}
+  ]},
+  db:{steps:[
+    {t:"Passo 1 — dBFS × dB SPL",html:`<p>O microfone do navegador entrega um valor relativo chamado <strong>dBFS</strong> (o quão perto do limite digital o sinal está, sempre ≤ 0). Ele não é, por si só, um nível de pressão sonora real.</p>`},
+    {t:"Passo 2 — A calibração é uma estimativa",html:`<p>Somamos um <strong>ajuste de calibração</strong> ao dBFS para converter em uma estimativa de <strong>dB SPL</strong> (a escala usada para descrever ruído do mundo real). Sem um decibelímetro de referência, esse ajuste é aproximado.</p>`},
+    {t:"Passo 3 — Use a escala de referência",html:`<p>Compare a leitura com a régua ao lado, que mostra exemplos típicos (sussurro, conversa, trânsito...) para dar uma noção intuitiva do nível medido.</p>`}
+  ]}
+};
+
+let tutState={key:null,idx:0};
+const tutorialOverlay=document.getElementById("tutorialOverlay");
+function openTutorial(key){
+  tutState={key,idx:0};
+  renderTutorialStep();
+  tutorialOverlay.classList.remove("hidden");
+}
+function renderTutorialStep(){
+  const tut=tutorials[tutState.key];
+  const step=tut.steps[tutState.idx];
+  document.getElementById("tutTitle").textContent=step.t;
+  document.getElementById("tutBody").innerHTML=step.html;
+  document.getElementById("tutStepNow").textContent=tutState.idx+1;
+  document.getElementById("tutStepTotal").textContent=tut.steps.length;
+  const dots=document.getElementById("tutDots");
+  dots.innerHTML="";
+  tut.steps.forEach((_,i)=>{
+    const d=document.createElement("span");
+    if(i===tutState.idx)d.className="active";
+    dots.appendChild(d);
+  });
+  document.getElementById("tutPrev").disabled=tutState.idx===0;
+  document.getElementById("tutNext").textContent=tutState.idx===tut.steps.length-1?"Concluir ✓":"Próximo ▶";
+}
+document.getElementById("tutPrev").onclick=()=>{if(tutState.idx>0){tutState.idx--;renderTutorialStep();}};
+document.getElementById("tutNext").onclick=()=>{
+  const tut=tutorials[tutState.key];
+  if(tutState.idx<tut.steps.length-1){tutState.idx++;renderTutorialStep();}
+  else closeTutorial();
+};
+function closeTutorial(){
+  tutorialOverlay.classList.add("hidden");
+  try{localStorage.setItem("neonWaveLab_tutSeen_"+tutState.key,"1")}catch(e){}
+}
+document.getElementById("tutorialClose").onclick=closeTutorial;
+tutorialOverlay.addEventListener("click",e=>{if(e.target===tutorialOverlay)closeTutorial();});
+
+document.getElementById("waveTutorialBtn").onclick=()=>openTutorial("waves");
+document.getElementById("waveGuideTutBtn").onclick=()=>openTutorial("waves");
+document.getElementById("bpmTutorialBtn").onclick=()=>openTutorial("bpm");
+document.getElementById("bpmGuideTutBtn").onclick=()=>openTutorial("bpm");
+document.getElementById("dbTutorialBtn").onclick=()=>openTutorial("db");
+document.getElementById("dbGuideTutBtn").onclick=()=>openTutorial("db");
+
+/* abre o tutorial de ondas automaticamente na primeira visita */
+try{
+  if(!localStorage.getItem("neonWaveLab_tutSeen_waves"))openTutorial("waves");
+}catch(e){}
+
+/* placeholders */
+drawWaveFrame();
+updateWaveGuide();
+updateBpmGuide();
+updateDbGuide();
+dc.fillStyle="#020a0f";dc.fillRect(0,0,dbCanvas.width,dbCanvas.height);
+dc.fillStyle="#789aa4";dc.font="20px Segoe UI";dc.textAlign="center";
+dc.fillText("Ative o microfone para iniciar a medição.",dbCanvas.width/2,dbCanvas.height/2);
+</script>
+</body>
+</html>
